@@ -1,104 +1,196 @@
-# Hostel Management AI Agent — FastAPI
+# Hostel Management System
 
-Production-ready AI Agent that orchestrates hostel operations (attendance, complaints, outings, leave, profile) on top of existing Hostel Management backend.
+A full-stack hostel management system with AI agent capabilities.
 
-## Architecture
-```
-Frontend → AI Agent API (FastAPI) → Grok LLM → Policies → Tool Registry → Hostel Backend APIs
-```
-Pipeline: Router → Service → Orchestration → Planner → Permission/Validation/Confirmation → Executor → Tool → Verifier → NL Response
+## Tech Stack
 
-## Folder Structure
-```
-app/
-├── main.py
-├── agent/
-│   ├── router.py, service.py
-│   ├── orchestration/{planner,executor,verifier,orchestration}.py
-│   ├── policies/{permission,validation,confirmation,safety}.py
-│   ├── tools/{registry, attendance, complaints, leave, outing, user}/
-│   ├── state/{agent_state, agent_session}.py
-│   ├── schemas/agent_chat.py
-│   ├── types/{agent_types,plan_types,tool_types}.py
-│   ├── prompts/agent_prompt.py
-│   └── errors/agent_errors.py
-├── core/{config,llm,http_client,security}.py
-└── requirements.txt
-```
+- **Backend**: FastAPI + PostgreSQL
+- **Frontend**: React + TypeScript + Vite + TailwindCSS
+- **AI Agent**: Groq API (Qwen model)
 
-## Installation
+## Prerequisites
+
+- Python 3.11+
+- Node.js 18+
+- PostgreSQL 15+
+- Groq API Key
+
+## Quick Start
+
+### 1. Environment Setup
+
+Copy the example env file and configure:
 ```bash
-python -m venv .venv
-# Windows
-.venv\Scripts\activate
-# Linux
-source .venv/bin/activate
+cp .env.example .env
+```
+
+Update `.env` with your credentials:
+```env
+# Database
+DATABASE_URL=postgresql+psycopg2://postgres:123@localhost:5434/hostel_management
+
+# Security
+JWT_SECRET=your-secret-key-here
+
+# AI Configuration
+AI_API_KEY=your_groq_api_key
+AI_BASE_URL=https://api.groq.com/openai/v1
+AI_MODEL=qwen/qwen3.8-27b
+
+# Backend URL (for agent to connect to API)
+HOSTEL_BACKEND_URL=http://localhost:8000
+CORS_ORIGINS=http://localhost:5173,http://localhost:3000
+```
+
+### 2. Database Setup
+
+Start PostgreSQL:
+```bash
+docker-compose up -d postgres
+```
+
+Initialize database:
+```bash
+python init_db.py
+```
+
+Seed test data:
+```bash
+python seed_test_data.py
+```
+
+### 3. Backend Setup
+
+Install dependencies:
+```bash
 pip install -r requirements.txt
-cp .env.example .env  # fill GROK_API_KEY
 ```
 
-## Environment
-See `.env.example`. Never commit `.env`.
-
-## Running
+Start the backend server:
 ```bash
-uvicorn app.main:app --reload
-# health
-curl http://localhost:8000/health
-# docs
-http://localhost:8000/docs
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-## Auth
-Agent forwards `Authorization: Bearer <token>` to backend. User identity from JWT (`sub`, `role`). Never trust `student_id` from LLM.
+Backend will be available at: http://localhost:8000
 
-## Endpoints
-- `GET /health`, `GET /`, `GET /api/agent/health`, `POST /api/agent/chat`
-- Hostel backend at `/api/v1/*`:
-  - `POST /api/v1/auth/register`, `POST /api/v1/auth/login`, `GET /api/v1/users/me`
-  - `GET/POST /api/v1/students`, `GET/PATCH/DELETE /api/v1/students/{id}`, `PATCH /api/v1/students/{id}/room`
-  - `GET/POST /api/v1/rooms`, `GET/PATCH/DELETE /api/v1/rooms/{id}`
-  - `POST/GET /api/v1/attendance`, `GET /api/v1/attendance/student/{id}`, `PATCH /api/v1/attendance/{id}`
-  - `POST/GET /api/v1/leaves`, `GET/PATCH /api/v1/leaves/{id}`, `PATCH /api/v1/leaves/{id}/approve|reject|cancel`
-  - `POST/GET /api/v1/outings`, `GET /api/v1/outings/{id}`, `PATCH /api/v1/outings/{id}/approve|reject`
-  - `POST/GET /api/v1/complaints`, `GET/PATCH /api/v1/complaints/{id}`
-  - `POST/GET /api/v1/food-menu`, `GET/PATCH/DELETE /api/v1/food-menu/{id}`
+### 4. Frontend Setup
 
-Example:
+Navigate to frontend:
 ```bash
-TOKEN=$(curl -s -X POST http://localhost:8000/api/v1/auth/login -H "Content-Type: application/json" -d '{"email":"student1@hostel.com","password":"Student@123"}' | jq -r .token)
-curl -X POST http://localhost:8000/api/agent/chat -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d '{"message":"What is my attendance?"}'
+cd frontend
 ```
 
-## Adding a New Tool
-1. Create `app/agent/tools/<domain>/<tool>.py` with `async def my_tool(args, ctx)`
-2. `register("my_tool", "...", my_tool)`
-3. Add permission in `policies/permission.py`
-4. Add validation in `policies/validation.py`
-5. LLM will auto-select via planner prompt
-
-## Leave Workflow
-- Student `POST /api/v1/leaves` with `startDate`, `endDate`, `reason` → `PENDING`
-- Warden `PATCH /api/v1/leaves/{id}/approve|reject`, Student `PATCH /cancel` (PENDING only)
-- Validations: `endDate>=startDate`, overlapping `PENDING/APPROVED` → `409`, status transitions enforced
-- Agent: `Apply leave from Sep 1 to Sep 3` → confirmation → `apply_leave` tool → backend
-
-## Testing
+Install dependencies:
 ```bash
-pytest -q
-# 15 tests: health, auth, students, rooms, leave, agent
+npm install
 ```
 
-## Database
+Create frontend env file:
 ```bash
-# Auto-migrate via Base.metadata.create_all (dev)
-# Tables: users, students, rooms, attendance, complaints, food_menus, outings, leaves
-# Production: set ENV=production and DATABASE_URL explicitly (dev fallback isolated)
+cp .env.example .env.local
 ```
 
-## Security
-- No `eval`, only registry dispatch
-- Permission matrix enforced independent of LLM
-- Safety blocks prompt injection
-- No API key logging
-- CORS via `CORS_ORIGINS` env (production must not use `*` with credentials)
+Update `frontend/.env.local`:
+```env
+VITE_API_URL=http://localhost:8000
+```
+
+Start the frontend:
+```bash
+npm run dev
+```
+
+Frontend will be available at: http://localhost:5173
+
+## Testing Backend Connectivity
+
+Run the test script:
+```bash
+python test_backend.py
+```
+
+This will verify:
+- Backend health endpoint
+- Database connectivity
+- AI API configuration
+
+## Features
+
+### For Students
+- View room details and roommates
+- Check attendance records
+- Request outings
+- Create and track complaints
+- View food menu
+- AI Assistant for hostel services
+
+### For Wardens
+- Manage students and rooms
+- Approve/reject outing requests
+- Handle complaints
+- Manage food menu
+- View attendance reports
+
+## AI Agent
+
+The AI agent uses Groq's Qwen model to help students with:
+- Creating outing requests
+- Checking attendance
+- Filing complaints
+- Viewing food menu
+- General hostel queries
+
+## API Documentation
+
+Once the backend is running, visit:
+- Swagger UI: http://localhost:8000/docs
+- ReDoc: http://localhost:8000/redoc
+
+## Troubleshooting
+
+### "All connection attempts failed" error
+
+This means the backend is not running or not accessible:
+
+1. Check if backend is running: `curl http://localhost:8000/health`
+2. Verify `HOSTEL_BACKEND_URL` in `.env` is set to `http://localhost:8000`
+3. Check logs for connection errors
+4. Run `python test_backend.py` to diagnose
+
+### Database connection errors
+
+1. Ensure PostgreSQL is running
+2. Check `DATABASE_URL` in `.env`
+3. Verify database credentials
+4. Try recreating the database: `python init_db.py`
+
+### Frontend can't reach backend
+
+1. Check CORS settings in `.env`
+2. Verify `VITE_API_URL` in `frontend/.env.local`
+3. Ensure backend is accessible from browser
+
+## Project Structure
+
+```
+.
+├── app/                    # Backend application
+│   ├── agent/             # AI agent logic
+│   ├── core/              # Core configurations
+│   ├── models/            # Database models
+│   ├── routers/           # API routes
+│   ├── schemas/           # Pydantic schemas
+│   └── services/          # Business logic
+├── frontend/              # React frontend
+│   └── src/
+│       ├── api/          # API client
+│       ├── components/   # UI components
+│       ├── layouts/      # Layout components
+│       ├── pages/        # Page components
+│       └── routes/       # Routing
+└── docker-compose.yml    # Docker configuration
+```
+
+## License
+
+MIT

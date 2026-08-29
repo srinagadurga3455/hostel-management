@@ -1,6 +1,25 @@
+# Environment variables
 .env
-.venv/
-__pycache__/
-*.pyc
-hostel.db
+*.env
+
+# Python
+server/.venv/
+server/venv/
+server/__pycache__/
+server/**/*.pyc
+server/.pytest_cache/
+
+# Node
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+
+# Logs
 *.log
