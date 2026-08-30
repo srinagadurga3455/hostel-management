@@ -5,6 +5,15 @@ A web-based hostel management system with dedicated **Student** and **Warden** d
 ## 🔗 Quick Links
 
 - **Live Application:** https://hostel-management-srkr.vercel.app/
+## 🔐 Demo Credentials
+
+Use the following accounts to explore the Student and Warden dashboards:
+
+| Role | Email | Password |
+|------|-------|----------|
+| **Warden** | `demo.warden@hostel.com` | `Warden@123` |
+| **Student** | `demo.student@hostel.com` | `Student@123` | 
+
 - **Demo Video:** https://www.loom.com/share/bc6fa3d1502b4b48b99db8cae0779fba
 - **GitHub Repository:** https://github.com/durga67/hostel-management
 - **Docker Hub — Combined (all-in-one):** https://hub.docker.com/r/durga67/hostel-management (`docker pull durga67/hostel-management:latest`)
