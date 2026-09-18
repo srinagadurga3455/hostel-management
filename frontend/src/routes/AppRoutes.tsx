@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
+import LandingPage from '../pages/landing/LandingPage'
 import Login from '../pages/auth/Login'
 import Register from '../pages/auth/Register'
 import { ProtectedRoute } from './ProtectedRoute'
@@ -26,6 +27,7 @@ import WardenLeaves from '../pages/warden/Leaves'
 export default function AppRoutes() {
   return (
     <Routes>
+      <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/student" element={<ProtectedRoute><RoleRoute allow={['student']}><StudentLayout /></RoleRoute></ProtectedRoute>}>
@@ -49,8 +51,7 @@ export default function AppRoutes() {
         <Route path="outings" element={<WardenOutings />} />
         <Route path="leaves" element={<WardenLeaves />} />
       </Route>
-      <Route path="/" element={<Navigate to="/login" replace />} />
-      <Route path="*" element={<Navigate to="/login" replace />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
 }
